@@ -1,0 +1,7 @@
+.cache
+.vscode
+tiles
+build
+bin
+main
+compile_commands.json
