@@ -16,15 +16,15 @@ Map::Map(const std::filesystem::path &dirName, std::pair<int, int> xRange,
          std::pair<int, int> yRange) {
     for (const auto &entry : std::filesystem::directory_iterator(dirName)) {
         std::string filename = entry.path().filename().string();
-        if (filename.substr(filename.find_last_of(".") + 1) != "hgt")
+        if (filename.find_last_of(".hgt") == std::string::npos)
             continue;
 
         int lon;
         int lat;
         parseFilename(filename, lon, lat);
 
-        if (lon < xRange.first || lon > xRange.second || lat < yRange.first ||
-            lat > yRange.second)
+        if (!Utils::inRange(static_cast<float>(lon), static_cast<float>(xRange.first), static_cast<float>(xRange.second)) ||
+            !Utils::inRange(static_cast<float>(lat), static_cast<float>(yRange.first), static_cast<float>(yRange.second)))
             continue;
 
         tiles.emplace_back(lon, lat, entry.path());

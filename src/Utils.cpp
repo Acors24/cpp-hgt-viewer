@@ -53,4 +53,12 @@ void mercatorToSpherical(float x, float y, float &longitude, float &latitude) {
     latitude = glm::degrees(latitude);
 }
 
+bool inRange(float value, float a, float b) {
+    if (a < b) {
+        return a <= value && value <= b;
+    } else {
+        return value <= b || a <= value;
+    }
+}
+
 } // namespace Utils
