@@ -27,8 +27,20 @@ void main(void) {
     float x = 0.0, y = 0.0, z = 0.0;
     float radiusAt = EARTH_RADIUS + inHeight / 1000.0;
 
-    float longitude = longitude + colNorm;
-    float latitude = latitude - rowNorm;
+    mat4 invView = inverse(view);
+    float longitude = longitude;
+    float latitude = latitude;
+    if (flat_ > 0.5) {
+        if (invView[3][0] > 0 && longitude < -180.0 + invView[3][0] * 2 * PI) {
+            longitude += 360.0;
+        } else if (invView[3][0] < 0 && longitude > 180.0 + invView[3][0] * 2 * PI) {
+            longitude -= 360.0;
+        }
+    }
+
+    longitude = longitude + colNorm;
+    latitude = latitude - rowNorm;
+
     longitude = radians(longitude);
     latitude = radians(latitude);
     
