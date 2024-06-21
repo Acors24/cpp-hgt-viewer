@@ -14,30 +14,32 @@ out float ht;
 
 void main(void) {
     const float EARTH_RADIUS = 6378.0;
+    const float PI = 3.14159265359;
 
     int row = gl_VertexID / 1201;
     int col = gl_VertexID % 1201;
 
     float rowNorm = row / 1200.0;
     float colNorm = col / 1200.0;
-    
+
     float inHeight = texture(heightMap, vec2(colNorm, rowNorm)).r;
-    // float inHeight = texture(heightMap, 0.5).r;
 
     float x = 0.0, y = 0.0, z = 0.0;
     float radiusAt = EARTH_RADIUS + inHeight / 1000.0;
 
     float longitude = longitude + colNorm;
     float latitude = latitude - rowNorm;
-    const float PI = 3.14159265359;
+    longitude = radians(longitude);
+    latitude = radians(latitude);
+    
     if(flat_ > 0.5) {
-        x = longitude;
-        y = degrees(tan(radians(latitude)));
+        x = degrees(1 / (2 * PI) * longitude);
+        y = degrees(1 / (2 * PI) * log(tan(PI / 4 + latitude / 2.0)));
         z = 0.0;
     } else {
-        x = radiusAt * sin(radians(latitude - 90.0)) * cos(radians(longitude));
-        y = radiusAt * cos(radians(latitude - 90.0));
-        z = radiusAt * sin(radians(latitude - 90.0)) * sin(-radians(longitude));
+        x = radiusAt * cos(latitude) * sin(longitude);
+        y = radiusAt * sin(latitude);
+        z = radiusAt * cos(latitude) * cos(longitude);
     }
 
     gl_Position = projection * view * vec4(x, y, z, 1.0);

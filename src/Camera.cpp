@@ -1,5 +1,6 @@
 #include "Camera.hpp"
 #include "EarthGrid.hpp"
+#include "Utils.hpp"
 #include <cmath>
 #include <glm/trigonometric.hpp>
 
@@ -18,7 +19,31 @@ void Camera::processMouseMovement(float xOffset, float yOffset, bool flat,
     xOffset *= sensitivity * (slow ? 0.05f : 1.0f);
     yOffset *= sensitivity * (slow ? 0.05f : 1.0f);
 
-    if (!flat) {
+    if (flat) {
+        position.x += xOffset * 0.1f;
+        position.y -= yOffset * 0.1f;
+
+        position.x = glm::radians(position.x);
+        position.y = glm::radians(position.y);
+
+        constexpr float xLimit = 0.5f;
+        if (position.x < -xLimit)
+            position.x += 2.0f * xLimit;
+        if (position.x > xLimit)
+            position.x -= 2.0f * xLimit;
+
+        constexpr float yLimit = 1.0f;
+        if (position.y < -yLimit)
+            position.y = -yLimit;
+        if (position.y > yLimit)
+            position.y = yLimit;
+
+        Utils::mercatorToSpherical(position.x, position.y,
+                                   longitude, latitude);
+
+        position.x = glm::degrees(position.x);
+        position.y = glm::degrees(position.y);
+    } else {
         yaw += xOffset;
         pitch -= yOffset;
 
@@ -35,23 +60,6 @@ void Camera::processMouseMovement(float xOffset, float yOffset, bool flat,
             if (pitch < -limit)
                 pitch = -limit;
         }
-    } else {
-        longitude += xOffset * 0.1f;
-        latitude -= yOffset * 0.1f;
-
-        if (longitude < 180.0f)
-            longitude += 360.0f;
-        if (longitude > 180.0f)
-            longitude -= 360.0f;
-
-        const float latitudeLimit = glm::degrees(std::tan(glm::radians(85.0f)));
-        if (latitude < -latitudeLimit)
-            latitude = -latitudeLimit;
-        if (latitude > latitudeLimit)
-            latitude = latitudeLimit;
-
-        position.x = longitude;
-        position.y = latitude;
     }
 
     updateCameraVectors(flat);
@@ -60,11 +68,11 @@ void Camera::processMouseMovement(float xOffset, float yOffset, bool flat,
 void Camera::processScroll(float, float yOffset, bool) {
     fov -= yOffset;
 
-    if (fov > 180.0f)
-        fov = 180.0f;
+    if (fov > 150.0f)
+        fov = 150.0f;
 
-    if (fov < 0.1f)
-        fov = 0.1f;
+    if (fov < 10.0f)
+        fov = 10.0f;
 }
 
 void Camera::processKeyboard(Key key, float, bool flat, bool fast) {
@@ -110,20 +118,17 @@ void Camera::setMode(bool flat) {
     if (flat) {
         EarthGrid::cartesianToSpherical(position.x, position.y, position.z,
                                         longitude, latitude, altitude);
-        longitude = glm::degrees(longitude);
-        latitude = glm::degrees(latitude);
-        latitude = glm::degrees(std::tan(glm::radians(latitude)));
-        altitude -= EarthGrid::EARTH_RADIUS;
-        position.x = longitude;
-        position.y = latitude;
+        Utils::sphericalToMercator(longitude, latitude, position.x, position.y);
+        position.x = glm::degrees(position.x);
+        position.y = glm::degrees(position.y);
         position.z = 0.0f;
         yaw = -90.0f;
         pitch = 0.0f;
     } else {
-        latitude = glm::degrees(std::atan(glm::radians(latitude)));
-        EarthGrid::sphericalToCartesian(glm::radians(longitude),
-                                        glm::radians(latitude),
-                                        EarthGrid::EARTH_RADIUS + altitude,
+        position.x = glm::radians(position.x);
+        position.y = glm::radians(position.y);
+        Utils::mercatorToSpherical(position.x, position.y, longitude, latitude);
+        EarthGrid::sphericalToCartesian(longitude, latitude, altitude,
                                         position.x, position.y, position.z);
     }
     updateCameraVectors(flat);

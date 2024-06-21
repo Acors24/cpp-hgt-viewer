@@ -1,8 +1,9 @@
 #include "Utils.hpp"
 
-#include <cmath>
-#include <epoxy/gl.h>
 #include <GLFW/glfw3.h>
+#include <cmath>
+#include <glm/ext/scalar_constants.hpp>
+#include <glm/trigonometric.hpp>
 #include <iostream>
 #include <list>
 
@@ -20,7 +21,7 @@ inline constexpr unsigned int DELTA_SIZE = 100;
 inline std::list<float> deltas(DELTA_SIZE, 0.1f);
 inline float deltaAvg = 0.1f;
 
-void markFrameTime() { 
+void markFrameTime() {
     previousFrameTime = frameTime;
     frameTime = static_cast<float>(glfwGetTime());
 
@@ -30,18 +31,26 @@ void markFrameTime() {
     deltas.push_back(newDelta);
 }
 
-float getDeltaTime() {
-    return frameTime - previousFrameTime;
-}
+float getDeltaTime() { return frameTime - previousFrameTime; }
 
-
-float getFPS() {
-    return 1.0f / deltaAvg;
-}
+float getFPS() { return 1.0f / deltaAvg; }
 
 void sphericalToMercator(float longitude, float latitude, float &x, float &y) {
-    x = longitude / 180.0f;
-    y = std::log(std::tan((latitude + 90.0f) * M_PI / 360.0f));
+    longitude = glm::radians(longitude);
+    latitude = glm::radians(latitude);
+
+    x = 1.0f / (2.0f * glm::pi<float>()) * longitude;
+    y = 1.0f / (2.0f * glm::pi<float>()) *
+        std::log(std::tan(glm::pi<float>() / 4.0f + latitude / 2.0f));
+}
+
+void mercatorToSpherical(float x, float y, float &longitude, float &latitude) {
+    longitude = 2.0f * glm::pi<float>() * x;
+    latitude = 2.0f * std::atan(std::exp(2.0f * glm::pi<float>() * y)) -
+               glm::pi<float>() / 2.0f;
+
+    longitude = glm::degrees(longitude);
+    latitude = glm::degrees(latitude);
 }
 
 } // namespace Utils

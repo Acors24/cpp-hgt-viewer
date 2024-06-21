@@ -89,16 +89,25 @@ void EarthGrid::draw(const glm::mat4 &view, const glm::mat4 &projection) const {
 
 void EarthGrid::sphericalToCartesian(float phi, float theta, float r,
                                      float &outX, float &outY, float &outZ) {
-    outX = static_cast<float>(r * -cos(theta) * cos(phi));
+    if (phi < -180.0f || phi > 180.0f || theta < -90.0f || theta > 90.0f)
+        throw std::invalid_argument("Invalid spherical coordinates");
+
+    phi = glm::radians(phi);
+    theta = glm::radians(theta);
+
+    outX = static_cast<float>(r * cos(theta) * sin(phi));
     outY = static_cast<float>(r * sin(theta));
-    outZ = static_cast<float>(r * cos(theta) * sin(phi));
+    outZ = static_cast<float>(r * cos(theta) * cos(phi));
 }
 
 void EarthGrid::cartesianToSpherical(float x, float y, float z, float &outPhi,
                                      float &outTheta, float &outR) {
     outR = std::sqrt(x * x + y * y + z * z);
     outTheta = std::asin(y / outR);
-    outPhi = std::acos(x / outR / -std::cos(outTheta)) * glm::sign(z);
+    outPhi = std::atan2(x, z);
+
+    outTheta = glm::degrees(outTheta);
+    outPhi = glm::degrees(outPhi);
 }
 
 GLuint &EarthGrid::getVao() const { return vao; }

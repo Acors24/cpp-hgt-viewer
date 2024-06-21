@@ -1,5 +1,5 @@
+#include <cstdlib>
 #include <cstring>
-#include <exception>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/geometric.hpp>
 #include <glm/gtx/norm.hpp>
@@ -8,6 +8,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <random>
 
 #include "Camera.hpp"
 #include "Crosshair.hpp"
@@ -292,6 +293,9 @@ std::tuple<float, float, float> getStartPos(std::vector<std::string> &args) {
     return {startLon, startLat, startAlt};
 }
 
+bool testSMConversion();
+bool testCSConversion();
+
 int main(int argc, char *argv[]) {
     if (argc < 2) {
         std::cout << "Usage:\n";
@@ -318,4 +322,107 @@ int main(int argc, char *argv[]) {
     auto startPos = getStartPos(args);
 
     return run(dirName, lonRange, latRange, startPos);
+}
+
+bool testSMConversion() {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    float x;
+    float y;
+    float x2;
+    float y2;
+    float lon;
+    float lat;
+    float lon2;
+    float lat2;
+    
+    std::uniform_int_distribution lonGen(-180, 180);
+    std::uniform_int_distribution latGen(-90, 90);
+    for (int t = 0; t < 1000; t++) {
+        lon = static_cast<float>(lonGen(gen));
+        lat = static_cast<float>(latGen(gen));
+        Utils::sphericalToMercator(lon, lat, x, y);
+        Utils::mercatorToSpherical(x, y, lon2, lat2);
+        if (std::abs(lon - lon2) > 0.001 || std::abs(lat - lat2) > 0.001) {
+            std::cerr << "Conversion failed for:\n\tlon: " << lon << " lat: " << lat
+                      << "\n\tx: " << x << " y: " << y
+                      << "\n\tlon2: " << lon2 << " lat2: " << lat2 << "\n";
+            return false;
+        }
+    }
+
+    std::uniform_real_distribution xGen(-0.5f, 0.5f);
+    std::uniform_real_distribution yGen(-glm::pi<float>() / 2.0f,
+                                        glm::pi<float>() / 2.0f);
+    for (int t = 0; t < 1000; t++) {
+        x = xGen(gen);
+        y = yGen(gen);
+        Utils::mercatorToSpherical(x, y, lon, lat);
+        Utils::sphericalToMercator(lon, lat, x2, y2);
+        if (std::abs(x - x2) > 0.001 || std::abs(y - y2) > 0.001) {
+            std::cerr << "Conversion failed for:\n\tx: " << x << " y: " << y
+                      << "\n\tlon: " << lon << " lat: " << lat
+                      << "\n\tx2: " << x2 << " y2: " << y2 << "\n";
+            return false;
+        }       
+    }
+
+    return true;
+}
+
+bool testCSConversion() {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    float x;
+    float y;
+    float z;
+    float x2;
+    float y2;
+    float z2;
+    float lon;
+    float lat;
+    float alt;
+    float lon2;
+    float lat2;
+    float alt2;
+    
+    std::uniform_int_distribution lonGen(-175, 175);
+    std::uniform_int_distribution latGen(-85, 85);
+    std::uniform_int_distribution altGen(10, 10000);
+    for (int t = 0; t < 1000; t++) {
+        lon = static_cast<float>(lonGen(gen));
+        lat = static_cast<float>(latGen(gen));
+        alt = static_cast<float>(altGen(gen));
+        EarthGrid::sphericalToCartesian(lon, lat,
+                                        alt, x, y, z);
+        EarthGrid::cartesianToSpherical(x, y, z, lon2, lat2, alt2);
+        if (std::abs(lon - lon2) > 0.001 || std::abs(lat - lat2) > 0.001 || std::abs(alt - alt2) > 0.001) {
+            std::cerr << "Test " << t << " failed\n";
+            std::cerr << "Conversion failed for:\n\tlon: " << lon << " lat: " << lat << " alt: " << alt
+                      << "\n\tx: " << x << " y: " << y << " z: " << z
+                      << "\n\tlon2: " << lon2 << " lat2: " << lat2 << " alt2: " << alt2 << "\n";
+            return false;
+        }
+    }
+
+    std::uniform_real_distribution xGen(-1.0f, 1.0f);
+    std::uniform_real_distribution yGen(-1.0f, 1.0f);
+    std::uniform_real_distribution zGen(-1.0f, 1.0f);
+    for (int t = 0; t < 1000; t++) {
+        x = xGen(gen);
+        y = yGen(gen);
+        z = zGen(gen);
+        EarthGrid::cartesianToSpherical(x, y, z, lon, lat, alt);
+        EarthGrid::
+        sphericalToCartesian(lon, lat,
+                             alt, x2, y2, z2);
+        if (std::abs(x - x2) > 0.001 || std::abs(y - y2) > 0.001 || std::abs(z - z2) > 0.001) {
+            std::cerr << "Conversion failed for:\n\tx: " << x << " y: " << y << " z: " << z
+                      << "\n\tlon: " << lon << " lat: " << lat << " alt: " << alt
+                      << "\n\tx2: " << x2 << " y2: " << y2 << " z2: " << z2 << "\n";
+            return false;
+        }
+    }
+
+    return true;
 }

@@ -9,6 +9,7 @@ namespace Utils {
     void markFrameTime();
     float getFPS();
     void sphericalToMercator(float longitude, float latitude, float &x, float &y);
+    void mercatorToSpherical(float x, float y, float &longitude, float &latitude);
 }
 
 #endif
