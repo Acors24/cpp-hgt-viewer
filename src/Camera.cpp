@@ -2,6 +2,7 @@
 #include "EarthGrid.hpp"
 #include "Utils.hpp"
 #include <cmath>
+#include <glm/gtx/quaternion.hpp>
 #include <glm/trigonometric.hpp>
 
 Camera::Camera() : Camera(glm::vec3(0.0f)) {}
@@ -38,8 +39,7 @@ void Camera::processMouseMovement(float xOffset, float yOffset, bool flat,
         if (position.y > yLimit)
             position.y = yLimit;
 
-        Utils::mercatorToSpherical(position.x, position.y,
-                                   longitude, latitude);
+        Utils::mercatorToSpherical(position.x, position.y, longitude, latitude);
 
         position.x = glm::degrees(position.x);
         position.y = glm::degrees(position.y);
@@ -60,9 +60,9 @@ void Camera::processMouseMovement(float xOffset, float yOffset, bool flat,
             if (pitch < -limit)
                 pitch = -limit;
         }
-    }
 
-    updateCameraVectors(flat);
+        updateCameraVectors(false);
+    }
 }
 
 void Camera::processScroll(float, float yOffset, bool) {
@@ -95,22 +95,24 @@ void Camera::processKeyboard(Key key, float, bool flat, bool fast) {
             deltaPos -= up * speed;
 
         position += deltaPos * (fast ? 30.0f : 1.0f);
-    }
 
-    updateCameraVectors(flat);
+        updateCameraVectors(false);
+    }
 }
 
 void Camera::updateCameraVectors(bool flat) {
-    front = glm::normalize(
-        glm::vec3(cos(glm::radians(yaw)) * cos(glm::radians(pitch)),
-                  sin(glm::radians(pitch)),
-                  sin(glm::radians(yaw)) * cos(glm::radians(pitch))));
+    front = glm::vec3(cos(glm::radians(yaw)) * cos(glm::radians(pitch)),
+                      sin(glm::radians(pitch)),
+                      sin(glm::radians(yaw)) * cos(glm::radians(pitch)));
 
     if (flat) {
-        up = glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f));
+        up = glm::vec3(0.0f, 1.0f, 0.0f);
     } else {
         up = glm::normalize(position);
     }
+
+    auto quat = glm::rotation(glm::vec3(0.0f, 1.0f, 0.0f), up);
+    front = quat * front;
     right = glm::normalize(glm::cross(front, up));
 }
 
