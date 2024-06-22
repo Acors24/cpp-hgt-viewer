@@ -23,7 +23,7 @@ public:
 
     const static std::map<LOD, unsigned> lodIndices;
 
-    Map(const std::filesystem::path &dirName,
+    Map(const std::vector<std::string> &dirNames,
                 std::pair<int, int> xRange, std::pair<int, int> yRange);
 
     ~Map();

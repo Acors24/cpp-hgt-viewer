@@ -131,7 +131,7 @@ void mouseCallback(GLFWwindow *window, double xPos, double yPos) {
                                 true);
 }
 
-int run(const std::string &dirName, std::pair<int, int> xRange,
+int run(const std::vector<std::string> &dirNames, std::pair<int, int> xRange,
         std::pair<int, int> yRange, std::tuple<float, float, float> startPos) {
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW\n";
@@ -141,7 +141,9 @@ int run(const std::string &dirName, std::pair<int, int> xRange,
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    std::string windowTitle = "Height map viewer - " + dirName;
+    std::string windowTitle = "Height map viewer -";
+    for (const auto &dirName : dirNames)
+        windowTitle += " " + dirName;
     GLFWwindow *window =
         glfwCreateWindow(1280, 720, windowTitle.c_str(), nullptr, nullptr);
 
@@ -171,7 +173,7 @@ int run(const std::string &dirName, std::pair<int, int> xRange,
 
     EarthGrid grid;
     Crosshair crosshair;
-    Map map(dirName, xRange, yRange);
+    Map map(dirNames, xRange, yRange);
 
     float deltaTime;
     do {
@@ -226,15 +228,18 @@ int run(const std::string &dirName, std::pair<int, int> xRange,
 std::pair<int, int> extractLonRange(std::vector<std::string> &args) {
     std::pair<int, int> lonRange = {-180, 180};
     if (auto arg = std::find(args.begin(), args.end(), "-lon"); arg != args.end()) {
+        int consumed = 1;
         try {
             lonRange.first = std::stoi(*(arg + 1));
+            consumed += 1;
             lonRange.second = std::stoi(*(arg + 2));
-            args.erase(arg, arg + 3);
+            consumed += 1;
         } catch (std::out_of_range &) {
             std::cerr << "Missing argument for -lon\n";
         } catch (std::invalid_argument &) {
             std::cerr << "Invalid argument for -lon\n";
         }
+        args.erase(arg, arg + consumed);
     }
     return lonRange;
 }
@@ -242,15 +247,18 @@ std::pair<int, int> extractLonRange(std::vector<std::string> &args) {
 std::pair<int, int> extractLatRange(std::vector<std::string> &args) {
     std::pair<int, int> latRange = {-90, 90};
     if (auto arg = std::find(args.begin(), args.end(), "-lat"); arg != args.end()) {
+        int consumed = 1;
         try {
             latRange.first = std::stoi(*(arg + 1));
+            consumed += 1;
             latRange.second = std::stoi(*(arg + 2));
-            args.erase(arg, arg + 3);
+            consumed += 1;
         } catch (std::out_of_range &) {
             std::cerr << "Missing argument for -lat\n";
         } catch (std::invalid_argument &) {
             std::cerr << "Invalid argument for -lat\n";
         }
+        args.erase(arg, arg + consumed);
     }
     return latRange;
 }
@@ -260,16 +268,20 @@ std::tuple<float, float, float> extractStartPos(std::vector<std::string> &args) 
     float startLat = 0.0f;
     float startAlt = 1.0f;
     if (auto arg = std::find(args.begin(), args.end(), "-start"); arg != args.end()) {
+        int consumed = 1;
         try {
             startLon = std::stof(*(arg + 1));
+            consumed += 1;
             startLat = std::stof(*(arg + 2));
+            consumed += 1;
             startAlt = std::stof(*(arg + 3));
-            args.erase(arg, arg + 4);
+            consumed += 1;
         } catch (std::out_of_range &) {
             std::cerr << "Missing argument for -start\n";
         } catch (std::invalid_argument &) {
             std::cerr << "Invalid argument for -start\n";
         }
+        args.erase(arg, arg + consumed);
     }
     return {startLon, startLat, startAlt};
 }
@@ -294,17 +306,14 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-
     std::vector<std::string> args(argv, argv + argc);
-
-    std::string dirName = args.at(1);
-    args.erase(args.begin() + 1);
+    args.erase(args.begin());
 
     auto lonRange = extractLonRange(args);
     auto latRange = extractLatRange(args);
     auto startPos = extractStartPos(args);
 
-    return run(dirName, lonRange, latRange, startPos);
+    return run(args, lonRange, latRange, startPos);
 }
 
 bool testSMConversion() {

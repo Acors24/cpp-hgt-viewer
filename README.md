@@ -19,8 +19,10 @@ make clean
 ## Usage
 
 ```sh
-./main <directory/with/hgt/files> [-lon <x1> <x2>] [-lat <y1> <y2>] [-start <lon> <lat> <alt>]
+./main <path/to/hgt/files>... [-lon <x1> <x2>] [-lat <y1> <y2>] [-start <lon> <lat> <alt>]
 ```
+
+You must specify at least one path, which could contain directly the `.hgt` files or directories containing them, etc.
 
 Coordinates are given in degrees.
 - `-lon` and `-lat` specify the range of the loaded tiles, out of the ones in the specified directory.
@@ -29,7 +31,7 @@ Coordinates are given in degrees.
 Altitude is given in kilometers above sea level.\
 The order of the arguments does not matter.
 
-The program will look for `.hgt` files in the given directory, matching any given limits (`-lat`/`-lon`, if given), and load their data, assuming each of the files contains 1201 * 1201 encoded integers.
+The program will look for `.hgt` files in the given directories, matching any given limits (`-lat`/`-lon`, if given), and load their data, assuming each of the files contains 1201 * 1201 encoded integers.
 
 Loading can take a while, depending on the amount of `.hgt` files being loaded.
 

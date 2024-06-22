@@ -1,5 +1,7 @@
 #include "Map.hpp"
 #include "Utils.hpp"
+#include <filesystem>
+#include <iostream>
 #include <thread>
 
 void parseFilename(const std::string &filename, int &lon, int &lat) {
@@ -15,31 +17,42 @@ void parseFilename(const std::string &filename, int &lon, int &lat) {
 
 void enqueueTiles(const std::filesystem::path &dirName, std::pair<int, int> xRange,
                   std::pair<int, int> yRange) {
-    for (const auto &entry : std::filesystem::directory_iterator(dirName)) {
-        if (entry.is_directory()) {
-            enqueueTiles(entry.path(), xRange, yRange);
-            continue;
+    try {
+        for (const auto &entry : std::filesystem::directory_iterator(dirName)) {
+            if (entry.is_directory()) {
+                enqueueTiles(entry.path(), xRange, yRange);
+                continue;
+            }
+
+            std::string filename = entry.path().filename().string();
+            if (filename.find_last_of(".hgt") == std::string::npos)
+                continue;
+
+            int lon;
+            int lat;
+            parseFilename(filename, lon, lat);
+
+            if (!Utils::inRange(static_cast<float>(lon), static_cast<float>(xRange.first), static_cast<float>(xRange.second)) ||
+                !Utils::inRange(static_cast<float>(lat), static_cast<float>(yRange.first), static_cast<float>(yRange.second)))
+                continue;
+                
+            Tile::enqueueTile(lon, lat, entry.path());
         }
-
-        std::string filename = entry.path().filename().string();
-        if (filename.find_last_of(".hgt") == std::string::npos)
-            continue;
-
-        int lon;
-        int lat;
-        parseFilename(filename, lon, lat);
-
-        if (!Utils::inRange(static_cast<float>(lon), static_cast<float>(xRange.first), static_cast<float>(xRange.second)) ||
-            !Utils::inRange(static_cast<float>(lat), static_cast<float>(yRange.first), static_cast<float>(yRange.second)))
-            continue;
-            
-        Tile::enqueueTile(lon, lat, entry.path());
+    } catch (const std::filesystem::filesystem_error &e) {
+        std::cerr << e.what() << std::endl;
     }
 }
 
-Map::Map(const std::filesystem::path &dirName, std::pair<int, int> xRange,
+void enqueueTilesMulti(const std::vector<std::string> &dirNames, std::pair<int, int> xRange,
+                  std::pair<int, int> yRange) {
+    for (const auto &dirName : dirNames) {
+        enqueueTiles(dirName, xRange, yRange);
+    }
+}
+
+Map::Map(const std::vector<std::string> &dirNames, std::pair<int, int> xRange,
          std::pair<int, int> yRange) {
-    enqueueThread = std::thread(enqueueTiles, dirName, xRange, yRange);
+    enqueueThread = std::thread(enqueueTilesMulti, dirNames, xRange, yRange);
 }
 
 Map::~Map() {
