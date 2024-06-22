@@ -49,6 +49,12 @@ private:
 
     static void setRenderedTriangles();
 
+    static void enqueueTiles(const std::filesystem::path &dirName,
+                             std::pair<int, int> xRange, std::pair<int, int> yRange);
+
+    static void enqueueTilesMulti(const std::vector<std::string> &dirNames,
+                                  std::pair<int, int> xRange, std::pair<int, int> yRange);
+
     friend Tile;
 };
 

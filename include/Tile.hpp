@@ -47,6 +47,8 @@ private:
     static bool initialized;
 
     static std::mutex tileMutex;
+
+    friend class Map;
 };
 
 #endif

@@ -1,5 +1,6 @@
 #include "Map.hpp"
 #include "Utils.hpp"
+#include <algorithm>
 #include <filesystem>
 #include <iostream>
 #include <thread>
@@ -15,7 +16,7 @@ void parseFilename(const std::string &filename, int &lon, int &lat) {
         lon *= -1;
 }
 
-void enqueueTiles(const std::filesystem::path &dirName, std::pair<int, int> xRange,
+void Map::enqueueTiles(const std::filesystem::path &dirName, std::pair<int, int> xRange,
                   std::pair<int, int> yRange) {
     try {
         for (const auto &entry : std::filesystem::directory_iterator(dirName)) {
@@ -35,6 +36,11 @@ void enqueueTiles(const std::filesystem::path &dirName, std::pair<int, int> xRan
             if (!Utils::inRange(static_cast<float>(lon), static_cast<float>(xRange.first), static_cast<float>(xRange.second)) ||
                 !Utils::inRange(static_cast<float>(lat), static_cast<float>(yRange.first), static_cast<float>(yRange.second)))
                 continue;
+
+            if (std::find_if(tiles.begin(), tiles.end(), [lon, lat](const Tile &tile) {
+                    return tile.longitude == static_cast<float>(lon) && tile.latitude == static_cast<float>(lat);
+                }) != tiles.end())
+                continue;
                 
             Tile::enqueueTile(lon, lat, entry.path());
         }
@@ -43,7 +49,7 @@ void enqueueTiles(const std::filesystem::path &dirName, std::pair<int, int> xRan
     }
 }
 
-void enqueueTilesMulti(const std::vector<std::string> &dirNames, std::pair<int, int> xRange,
+void Map::enqueueTilesMulti(const std::vector<std::string> &dirNames, std::pair<int, int> xRange,
                   std::pair<int, int> yRange) {
     for (const auto &dirName : dirNames) {
         enqueueTiles(dirName, xRange, yRange);
