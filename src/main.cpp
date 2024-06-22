@@ -166,22 +166,8 @@ int run(const std::string &dirName, std::pair<int, int> xRange,
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    float camX;
-    float camY;
-    float camZ;
-    float startLon;
-    float startLat;
-    float startAlt;
-    std::tie(startLon, startLat, startAlt) = startPos;
-    EarthGrid::sphericalToCartesian(
-        glm::radians(startLon), glm::radians(startLat),
-        EarthGrid::EARTH_RADIUS + startAlt, camX, camY, camZ);
-
-    camera = Camera(glm::vec3(camX, camY, camZ));
-    camera.longitude = startLon;
-    camera.latitude = startLat;
-    camera.altitude = startAlt;
-    camera.setMode(Map::flat);
+    std::get<2>(startPos) += EarthGrid::EARTH_RADIUS;
+    camera = Camera(startPos);
 
     EarthGrid grid;
     Crosshair crosshair;

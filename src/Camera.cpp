@@ -5,10 +5,21 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/trigonometric.hpp>
 
-Camera::Camera() : Camera(glm::vec3(0.0f)) {}
+Camera::Camera() {
+    updateCameraVectors(true);
+}
 
-Camera::Camera(const glm::vec3 &position) : position(position) {
-    updateCameraVectors(false);
+Camera::Camera(std::tuple<float, float, float> startPos) {
+    auto [lon, lat, alt] = startPos;
+    longitude = lon;
+    latitude = lat;
+    altitude = alt;
+    Utils::sphericalToMercator(lon, lat, position.x,
+                               position.y);
+    position.x = glm::degrees(position.x);
+    position.y = glm::degrees(position.y);
+    position.z = 0.0f;
+    updateCameraVectors(true);
 }
 
 glm::mat4 Camera::getViewMatrix() const {

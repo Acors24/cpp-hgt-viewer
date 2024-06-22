@@ -16,11 +16,11 @@ enum class Key {
 
 class Camera {
 public:
-    glm::vec3 position;
+    glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 up;
     glm::vec3 front;
     glm::vec3 right;
-    float yaw = 0.0f;
+    float yaw = -90.0f;
     float pitch = 0.0f;
     float speed = 0.2f;
     float sensitivity = 0.05f;
@@ -31,7 +31,7 @@ public:
     float altitude = 0.0f;
 
     Camera();
-    explicit Camera(const glm::vec3 &position);
+    explicit Camera(std::tuple<float, float, float> position);
 
     glm::mat4 getViewMatrix() const;
 
