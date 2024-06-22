@@ -2,16 +2,24 @@
 #define TILE_HPP
 
 #include "Drawable.hpp"
+#include <mutex>
+#include <queue>
 
 class Tile : public Drawable {
 public:
-    explicit Tile(int longitude, int latitude,
-                  const std::filesystem::path &hgtFile);
+    Tile(int longitude, int latitude, const std::vector<float> &heights);
 
     void draw(const glm::mat4 &view,
               const glm::mat4 &projection) const override;
 
     static void updateIndices(unsigned step);
+
+    static std::queue<std::tuple<int, int, std::filesystem::path, std::vector<float>>> tilesToLoad;
+
+    static void loadTile();
+
+    static void enqueueTile(int longitude, int latitude,
+                            const std::filesystem::path &hgtFile);
 
 private:
     float longitude;
@@ -37,6 +45,8 @@ private:
     GLuint &getShaderProgram() const override;
 
     static bool initialized;
+
+    static std::mutex tileMutex;
 };
 
 #endif

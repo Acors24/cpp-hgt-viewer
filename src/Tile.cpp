@@ -3,9 +3,9 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <mutex>
 
-Tile::Tile(int longitude, int latitude, const std::filesystem::path &hgtFile)
-    : longitude(longitude), latitude(latitude) {
+void readHeights(const std::filesystem::path &hgtFile, std::vector<float> &heights) {
     std::ifstream file(hgtFile, std::ios::binary);
     if (!file.is_open()) {
         throw std::filesystem::filesystem_error(
@@ -13,7 +13,6 @@ Tile::Tile(int longitude, int latitude, const std::filesystem::path &hgtFile)
             std::make_error_code(std::errc::io_error));
     }
 
-    auto heights = std::vector<float>(1201 * 1201);
     unsigned char buf[2];
     for (int h = 0; h < 1201 * 1201; h++) {
         file.read(reinterpret_cast<char *>(buf), sizeof(buf));
@@ -21,7 +20,25 @@ Tile::Tile(int longitude, int latitude, const std::filesystem::path &hgtFile)
     }
 
     file.close();
+}
 
+void Tile::loadTile() {
+    std::scoped_lock lock(tileMutex);
+    if (tilesToLoad.empty())
+        return;
+
+    auto [longitude, latitude, hgtFile, heights] = tilesToLoad.front();
+    tilesToLoad.pop();
+
+    auto tile = Tile(longitude, latitude, heights);
+
+    Map::tiles.push_back(tile);
+
+    std::cout << "Loaded " << hgtFile << "\r";
+}
+
+Tile::Tile(int longitude, int latitude, const std::vector<float> &heights)
+    : longitude(longitude), latitude(latitude) {
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -35,8 +52,14 @@ Tile::Tile(int longitude, int latitude, const std::filesystem::path &hgtFile)
     glBindTexture(GL_TEXTURE_2D, 0);
 
     initialize();
+}
 
-    std::cout << "Loaded " << hgtFile << std::flush << '\r';
+void Tile::enqueueTile(int longitude, int latitude, const std::filesystem::path &hgtFile) {
+    auto heights = std::vector<float>(1201 * 1201);
+    readHeights(hgtFile, heights);
+
+    std::scoped_lock lock(tileMutex);
+    tilesToLoad.emplace(longitude, latitude, hgtFile, heights);
 }
 
 std::filesystem::path Tile::getShaderPath() const { return "shaders/Tile"; }
@@ -99,3 +122,7 @@ GLuint Tile::vao;
 GLuint Tile::vbo;
 GLuint Tile::ebo;
 GLuint Tile::shaderProgram;
+
+std::queue<std::tuple<int, int, std::filesystem::path, std::vector<float>>> Tile::tilesToLoad;
+
+std::mutex Tile::tileMutex;

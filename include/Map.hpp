@@ -4,6 +4,7 @@
 #include "Tile.hpp"
 #include <filesystem>
 #include <map>
+#include <thread>
 
 class Map {
 public:
@@ -25,8 +26,12 @@ public:
     Map(const std::filesystem::path &dirName,
                 std::pair<int, int> xRange, std::pair<int, int> yRange);
 
+    ~Map();
+
     static LOD lod;
     static bool flat;
+
+    void update() const;
 
     void draw(const glm::mat4 &view, const glm::mat4 &projection) const;
 
@@ -35,8 +40,10 @@ public:
     static void setLOD(LOD _lod);
 
 private:
-    std::vector<Tile> tiles;
+    static std::vector<Tile> tiles;
     static LOD effectiveLOD;
+
+    std::thread enqueueThread;
 
     friend Tile;
 };

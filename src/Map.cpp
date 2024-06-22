@@ -1,5 +1,6 @@
 #include "Map.hpp"
 #include "Utils.hpp"
+#include <thread>
 
 void parseFilename(const std::string &filename, int &lon, int &lat) {
     lon = std::stoi(filename.substr(4, 3));
@@ -12,8 +13,8 @@ void parseFilename(const std::string &filename, int &lon, int &lat) {
         lon *= -1;
 }
 
-Map::Map(const std::filesystem::path &dirName, std::pair<int, int> xRange,
-         std::pair<int, int> yRange) {
+void enqueueTiles(const std::filesystem::path &dirName, std::pair<int, int> xRange,
+                  std::pair<int, int> yRange) {
     for (const auto &entry : std::filesystem::directory_iterator(dirName)) {
         std::string filename = entry.path().filename().string();
         if (filename.find_last_of(".hgt") == std::string::npos)
@@ -26,12 +27,21 @@ Map::Map(const std::filesystem::path &dirName, std::pair<int, int> xRange,
         if (!Utils::inRange(static_cast<float>(lon), static_cast<float>(xRange.first), static_cast<float>(xRange.second)) ||
             !Utils::inRange(static_cast<float>(lat), static_cast<float>(yRange.first), static_cast<float>(yRange.second)))
             continue;
-
-        tiles.emplace_back(lon, lat, entry.path());
+            
+        Tile::enqueueTile(lon, lat, entry.path());
     }
 }
 
-void Map::draw(const glm::mat4 &view, const glm::mat4 &projection) const {
+Map::Map(const std::filesystem::path &dirName, std::pair<int, int> xRange,
+         std::pair<int, int> yRange) {
+    enqueueThread = std::thread(enqueueTiles, dirName, xRange, yRange);
+}
+
+Map::~Map() {
+    enqueueThread.join();
+}
+
+void Map::update() const {
     if (Map::lod == LOD::AUTO) {
         auto fps = 1.0f / Utils::getDeltaTime();
         bool changed = false;
@@ -50,6 +60,10 @@ void Map::draw(const glm::mat4 &view, const glm::mat4 &projection) const {
         }
     }
 
+    Tile::loadTile();
+}
+
+void Map::draw(const glm::mat4 &view, const glm::mat4 &projection) const {
     for (const auto &tile : tiles) {
         tile.draw(view, projection);
     }
@@ -78,3 +92,4 @@ const std::map<Map::LOD, unsigned> Map::lodIndices = {
     {Map::LOD::NATIVE, 1}, {Map::LOD::HIGH, 2},   {Map::LOD::MEDIUM, 4},
     {Map::LOD::LOW, 8},    {Map::LOD::AWFUL, 16}, {Map::LOD::POTATO, 30},
     {Map::LOD::NONE, 60},  {Map::LOD::USOS, 120}};
+std::vector<Tile> Map::tiles;

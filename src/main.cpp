@@ -202,6 +202,8 @@ int run(const std::string &dirName, std::pair<int, int> xRange,
 
         int rendered = 0;
 
+        map.update();
+
         if (Map::flat) {
             glm::mat4 orthoMatrix =
                 glm::ortho(-mapScale * aspect, mapScale * aspect, -mapScale,
