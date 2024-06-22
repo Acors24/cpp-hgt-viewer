@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cstdlib>
 #include <cstring>
 #include <glm/ext/matrix_clip_space.hpp>
@@ -236,58 +237,52 @@ int run(const std::string &dirName, std::pair<int, int> xRange,
     return 0;
 }
 
-std::pair<int, int> getLonRange(const std::vector<std::string> &args) {
+std::pair<int, int> extractLonRange(std::vector<std::string> &args) {
     std::pair<int, int> lonRange = {-180, 180};
-    for (int i = 2; i < args.size(); i++) {
-        if (args[i] == "-lon") {
-            try {
-                lonRange.first = std::stoi(args.at(i + 1));
-                lonRange.second = std::stoi(args.at(i + 2));
-                break;
-            } catch (std::out_of_range &) {
-                std::cerr << "Missing argument for -lon\n";
-            } catch (std::invalid_argument &) {
-                std::cerr << "Invalid argument for -lon\n";
-            }
+    if (auto arg = std::find(args.begin(), args.end(), "-lon"); arg != args.end()) {
+        try {
+            lonRange.first = std::stoi(*(arg + 1));
+            lonRange.second = std::stoi(*(arg + 2));
+            args.erase(arg, arg + 3);
+        } catch (std::out_of_range &) {
+            std::cerr << "Missing argument for -lon\n";
+        } catch (std::invalid_argument &) {
+            std::cerr << "Invalid argument for -lon\n";
         }
     }
     return lonRange;
 }
 
-std::pair<int, int> getLatRange(const std::vector<std::string> &args) {
+std::pair<int, int> extractLatRange(std::vector<std::string> &args) {
     std::pair<int, int> latRange = {-90, 90};
-    for (int i = 2; i < args.size(); i++) {
-        if (args[i] == "-lat") {
-            try {
-                latRange.first = std::stoi(args.at(i + 1));
-                latRange.second = std::stoi(args.at(i + 2));
-                break;
-            } catch (std::out_of_range &) {
-                std::cerr << "Missing argument for -lat\n";
-            } catch (std::invalid_argument &) {
-                std::cerr << "Invalid argument for -lat\n";
-            }
+    if (auto arg = std::find(args.begin(), args.end(), "-lat"); arg != args.end()) {
+        try {
+            latRange.first = std::stoi(*(arg + 1));
+            latRange.second = std::stoi(*(arg + 2));
+            args.erase(arg, arg + 3);
+        } catch (std::out_of_range &) {
+            std::cerr << "Missing argument for -lat\n";
+        } catch (std::invalid_argument &) {
+            std::cerr << "Invalid argument for -lat\n";
         }
     }
     return latRange;
 }
 
-std::tuple<float, float, float> getStartPos(std::vector<std::string> &args) {
+std::tuple<float, float, float> extractStartPos(std::vector<std::string> &args) {
     float startLon = 0.0f;
     float startLat = 0.0f;
     float startAlt = 1.0f;
-    for (int i = 2; i < args.size(); i++) {
-        if (args[i] == "-start") {
-            try {
-                startLon = std::stof(args.at(i + 1));
-                startLat = std::stof(args.at(i + 2));
-                startAlt = std::stof(args.at(i + 3));
-                break;
-            } catch (std::out_of_range &) {
-                std::cerr << "Missing argument for -start\n";
-            } catch (std::invalid_argument &) {
-                std::cerr << "Invalid argument for -start\n";
-            }
+    if (auto arg = std::find(args.begin(), args.end(), "-start"); arg != args.end()) {
+        try {
+            startLon = std::stof(*(arg + 1));
+            startLat = std::stof(*(arg + 2));
+            startAlt = std::stof(*(arg + 3));
+            args.erase(arg, arg + 4);
+        } catch (std::out_of_range &) {
+            std::cerr << "Missing argument for -start\n";
+        } catch (std::invalid_argument &) {
+            std::cerr << "Invalid argument for -start\n";
         }
     }
     return {startLon, startLat, startAlt};
@@ -316,10 +311,12 @@ int main(int argc, char *argv[]) {
 
     std::vector<std::string> args(argv, argv + argc);
 
-    std::string dirName = args[1];
-    auto lonRange = getLonRange(args);
-    auto latRange = getLatRange(args);
-    auto startPos = getStartPos(args);
+    std::string dirName = args.at(1);
+    args.erase(args.begin() + 1);
+
+    auto lonRange = extractLonRange(args);
+    auto latRange = extractLatRange(args);
+    auto startPos = extractStartPos(args);
 
     return run(dirName, lonRange, latRange, startPos);
 }
