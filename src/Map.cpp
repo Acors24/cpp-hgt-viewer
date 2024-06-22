@@ -57,10 +57,17 @@ void Map::update() const {
 
         if (changed) {
             Tile::updateIndices(lodIndices.at(Map::effectiveLOD));
+            setRenderedTriangles();
         }
     }
 
     Tile::loadTile();
+}
+
+void Map::setRenderedTriangles() {
+    int sideLength = 1200 / Map::lodIndices.at(effectiveLOD);
+    Map::renderedTriangles = sideLength * sideLength * 2;
+    Map::renderedTriangles *= Map::tiles.size();
 }
 
 void Map::draw(const glm::mat4 &view, const glm::mat4 &projection) const {
@@ -79,6 +86,7 @@ void Map::setLOD(LOD newLod) {
     Map::effectiveLOD = newLod;
 
     Tile::updateIndices(lodIndices.at(newLod));
+    setRenderedTriangles();
 }
 
 void Map::recompileShaders() {
@@ -93,3 +101,4 @@ const std::map<Map::LOD, unsigned> Map::lodIndices = {
     {Map::LOD::LOW, 8},    {Map::LOD::AWFUL, 16}, {Map::LOD::POTATO, 30},
     {Map::LOD::NONE, 60},  {Map::LOD::USOS, 120}};
 std::vector<Tile> Map::tiles;
+int Map::renderedTriangles = 0;

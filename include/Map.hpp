@@ -31,6 +31,8 @@ public:
     static LOD lod;
     static bool flat;
 
+    static int renderedTriangles;
+
     void update() const;
 
     void draw(const glm::mat4 &view, const glm::mat4 &projection) const;
@@ -44,6 +46,8 @@ private:
     static LOD effectiveLOD;
 
     std::thread enqueueThread;
+
+    static void setRenderedTriangles();
 
     friend Tile;
 };

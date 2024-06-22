@@ -200,8 +200,6 @@ int run(const std::string &dirName, std::pair<int, int> xRange,
 
         float aspect = (float)width / (float)height;
 
-        int rendered = 0;
-
         map.update();
 
         if (Map::flat) {
@@ -220,11 +218,11 @@ int run(const std::string &dirName, std::pair<int, int> xRange,
 
         std::cout << std::setw(10) << std::left << std::scientific
                   << std::setprecision(3)
-                  << static_cast<float>(rendered) / deltaTime
+                  << static_cast<float>(Map::renderedTriangles) / deltaTime
                   << " triangles/sec. " << std::fixed << std::setw(4)
                   << std::right << Utils::getFPS() << " FPS";
         std::cout << " | " << camera.longitude << " " << camera.latitude;
-        std::cout << "      \r" << std::flush;
+        std::cout << "  \r" << std::flush;
 
         glfwSwapBuffers(window);
         glfwPollEvents();
