@@ -16,6 +16,11 @@ void parseFilename(const std::string &filename, int &lon, int &lat) {
 void enqueueTiles(const std::filesystem::path &dirName, std::pair<int, int> xRange,
                   std::pair<int, int> yRange) {
     for (const auto &entry : std::filesystem::directory_iterator(dirName)) {
+        if (entry.is_directory()) {
+            enqueueTiles(entry.path(), xRange, yRange);
+            continue;
+        }
+
         std::string filename = entry.path().filename().string();
         if (filename.find_last_of(".hgt") == std::string::npos)
             continue;
