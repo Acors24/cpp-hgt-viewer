@@ -98,31 +98,31 @@ void Drawable::compileShaders() const {
 
     if (shaderTypes & ShaderType::VERTEX) {
         GLuint vertexShader =
-            compileShader(shaderPath + ".vs", GL_VERTEX_SHADER);
+            compileShader(shaderPath + ".vert", GL_VERTEX_SHADER);
         glAttachShader(shaderProgram, vertexShader);
     }
 
     if (shaderTypes & ShaderType::TESS_CONTROL) {
         GLuint tessControlShader =
-            compileShader(shaderPath + ".tcs", GL_TESS_CONTROL_SHADER);
+            compileShader(shaderPath + ".tesc", GL_TESS_CONTROL_SHADER);
         glAttachShader(shaderProgram, tessControlShader);
     }
 
     if (shaderTypes & ShaderType::TESS_EVALUATION) {
         GLuint tessEvaluationShader =
-            compileShader(shaderPath + ".tes", GL_TESS_EVALUATION_SHADER);
+            compileShader(shaderPath + ".tese", GL_TESS_EVALUATION_SHADER);
         glAttachShader(shaderProgram, tessEvaluationShader);
     }
 
     if (shaderTypes & ShaderType::GEOMETRY) {
         GLuint geometryShader =
-            compileShader(shaderPath + ".gs", GL_GEOMETRY_SHADER);
+            compileShader(shaderPath + ".geom", GL_GEOMETRY_SHADER);
         glAttachShader(shaderProgram, geometryShader);
     }
 
     if (shaderTypes & ShaderType::FRAGMENT) {
         GLuint fragmentShader =
-            compileShader(shaderPath + ".fs", GL_FRAGMENT_SHADER);
+            compileShader(shaderPath + ".frag", GL_FRAGMENT_SHADER);
         glAttachShader(shaderProgram, fragmentShader);
     }
 
