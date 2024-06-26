@@ -46,7 +46,7 @@ Tile::Tile(int longitude, int latitude, const std::vector<float> &heights)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, 1201, 1201, 0, GL_RED, GL_FLOAT,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R16F, 1201, 1201, 0, GL_RED, GL_FLOAT,
                  heights.data());
 
     glBindTexture(GL_TEXTURE_2D, 0);
