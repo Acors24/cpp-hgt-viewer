@@ -21,7 +21,7 @@ public:
         AUTO
     };
 
-    const static std::map<LOD, unsigned> lodIndices;
+    const static std::map<LOD, unsigned> sideLengths;
 
     Map(const std::vector<std::string> &dirNames,
                 std::pair<int, int> xRange, std::pair<int, int> yRange);
@@ -39,7 +39,7 @@ public:
 
     void recompileShaders();
 
-    static void setLOD(LOD _lod);
+    static void setLOD(LOD newLod);
 
 private:
     static std::vector<Tile> tiles;

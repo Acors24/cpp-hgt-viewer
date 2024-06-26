@@ -1,4 +1,4 @@
-#version 330 
+#version 410 
 #extension GL_ARB_explicit_uniform_location : require
 
 out vec4 color;

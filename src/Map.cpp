@@ -59,6 +59,7 @@ void Map::enqueueTilesMulti(const std::vector<std::string> &dirNames, std::pair<
 Map::Map(const std::vector<std::string> &dirNames, std::pair<int, int> xRange,
          std::pair<int, int> yRange) {
     enqueueThread = std::thread(enqueueTilesMulti, dirNames, xRange, yRange);
+    setLOD(LOD::AUTO);
 }
 
 Map::~Map() {
@@ -66,30 +67,16 @@ Map::~Map() {
 }
 
 void Map::update() const {
-    if (Map::lod == LOD::AUTO) {
-        auto fps = 1.0f / Utils::getDeltaTime();
-        bool changed = false;
-        if (fps < 20 && Map::effectiveLOD != LOD::USOS) {
-            Map::effectiveLOD =
-                static_cast<LOD>(static_cast<int>(Map::effectiveLOD) + 1);
-            changed = true;
-        } else if (fps > 60 && Map::effectiveLOD != LOD::NATIVE) {
-            Map::effectiveLOD =
-                static_cast<LOD>(static_cast<int>(Map::effectiveLOD) - 1);
-            changed = true;
-        }
-
-        if (changed) {
-            Tile::updateIndices(lodIndices.at(Map::effectiveLOD));
-            setRenderedTriangles();
-        }
-    }
-
     Tile::loadTile();
 }
 
 void Map::setRenderedTriangles() {
-    int sideLength = 1200 / Map::lodIndices.at(effectiveLOD);
+    if (lod == LOD::AUTO) {
+        Map::renderedTriangles = 0;
+        return;
+    }
+
+    int sideLength = Map::sideLengths.at(lod);
     Map::renderedTriangles = sideLength * sideLength * 2;
     Map::renderedTriangles *= Map::tiles.size();
 }
@@ -104,12 +91,13 @@ void Map::setLOD(LOD newLod) {
     Map::lod = newLod;
 
     if (newLod == LOD::AUTO) {
+        Tile::setLOD(-1.0f);
         return;
     }
 
     Map::effectiveLOD = newLod;
 
-    Tile::updateIndices(lodIndices.at(newLod));
+    Tile::setLOD(static_cast<float>(sideLengths.at(newLod)));
     setRenderedTriangles();
 }
 
@@ -118,11 +106,11 @@ void Map::recompileShaders() {
 }
 
 Map::LOD Map::lod = Map::LOD::AUTO;
-Map::LOD Map::effectiveLOD = Map::LOD::POTATO;
+Map::LOD Map::effectiveLOD = Map::LOD::USOS;
 bool Map::flat = true;
-const std::map<Map::LOD, unsigned> Map::lodIndices = {
-    {Map::LOD::NATIVE, 1}, {Map::LOD::HIGH, 2},   {Map::LOD::MEDIUM, 4},
-    {Map::LOD::LOW, 8},    {Map::LOD::AWFUL, 16}, {Map::LOD::POTATO, 30},
-    {Map::LOD::NONE, 60},  {Map::LOD::USOS, 120}};
+const std::map<Map::LOD, unsigned> Map::sideLengths = {
+    {Map::LOD::NATIVE, 1200}, {Map::LOD::HIGH, 800},   {Map::LOD::MEDIUM, 400},
+    {Map::LOD::LOW, 200},    {Map::LOD::AWFUL, 100}, {Map::LOD::POTATO, 60},
+    {Map::LOD::NONE, 40},  {Map::LOD::USOS, 20}};
 std::vector<Tile> Map::tiles;
 int Map::renderedTriangles = 0;

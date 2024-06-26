@@ -10,6 +10,14 @@ void Drawable::initialize() {
         return;
     }
 
+    glGenVertexArrays(1, &getVao());
+    glBindVertexArray(getVao());
+
+    glGenBuffers(1, &getVbo());
+    glBindBuffer(GL_ARRAY_BUFFER, getVbo());
+    glGenBuffers(1, &getEbo());
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, getEbo());
+
     initializeMesh();
     compileShaders();
     setBuffers();
@@ -140,19 +148,12 @@ void Drawable::recompileShaders() const {
 }
 
 void Drawable::setBuffers() {
-    glGenVertexArrays(1, &getVao());
-    glBindVertexArray(getVao());
-
-    glGenBuffers(1, &getVbo());
-    glBindBuffer(GL_ARRAY_BUFFER, getVbo());
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3),
                  &vertices[0], GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
-    glGenBuffers(1, &getEbo());
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, getEbo());
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,
                  getIndices().size() * sizeof(unsigned int),
                  getIndices().data(), GL_STATIC_DRAW);

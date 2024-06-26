@@ -137,8 +137,8 @@ int run(const std::vector<std::string> &dirNames, std::pair<int, int> xRange,
         std::cerr << "Failed to initialize GLFW\n";
         return 1;
     }
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     std::string windowTitle = "Height map viewer -";
@@ -167,6 +167,7 @@ int run(const std::vector<std::string> &dirNames, std::pair<int, int> xRange,
     glEnable(GL_PRIMITIVE_RESTART);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glPatchParameteri(GL_PATCH_VERTICES, 4);
 
     std::get<2>(startPos) += EarthGrid::EARTH_RADIUS;
     camera = Camera(startPos);

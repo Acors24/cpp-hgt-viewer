@@ -12,9 +12,9 @@ public:
     void draw(const glm::mat4 &view,
               const glm::mat4 &projection) const override;
 
-    static void updateIndices(unsigned step);
-
     static std::queue<std::tuple<int, int, std::filesystem::path, std::vector<float>>> tilesToLoad;
+
+    static void setLOD(float resolution);
 
     static void loadTile();
 
@@ -32,6 +32,8 @@ private:
     static GLuint ebo;
     static GLuint shaderProgram;
     GLuint texture;
+
+    static float sideLength;
 
     void initializeMesh() override;
     std::filesystem::path getShaderPath() const override;
