@@ -50,6 +50,10 @@ GLuint &Crosshair::getShaderProgram() const {
     return shaderProgram;
 }
 
+int Crosshair::getShaderTypes() const {
+    return ShaderType::VERTEX | ShaderType::FRAGMENT;
+}
+
 std::vector<unsigned> Crosshair::indices;
 
 std::vector<unsigned> &Crosshair::getIndices() {

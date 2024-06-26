@@ -102,6 +102,10 @@ void Tile::draw(const glm::mat4 &view, const glm::mat4 &projection) const {
     glDrawElements(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, nullptr);
 }
 
+int Tile::getShaderTypes() const {
+    return ShaderType::VERTEX | ShaderType::FRAGMENT;
+}
+
 GLuint &Tile::getVao() const { return vao; }
 
 GLuint &Tile::getVbo() const { return vbo; }

@@ -17,79 +17,121 @@ void Drawable::initialize() {
     isInitialized() = true;
 }
 
-void Drawable::compileShaders() const {
-    std::filesystem::path shaderPath = getShaderPath();
-    std::string vertexShaderPath = shaderPath.string() + ".vs";
-    std::string fragmentShaderPath = shaderPath.string() + ".fs";
+void checkShaderError(GLuint shader, GLuint flag, bool isProgram,
+                      const std::string &errorMessage) {
+    int success;
+    std::string infoLog;
+    if (isProgram) {
+        glGetProgramiv(shader, flag, &success);
+    } else {
+        glGetShaderiv(shader, flag, &success);
+    }
 
-    std::string vertexShaderSource;
-    std::string fragmentShaderSource;
+    if (!success) {
+        if (isProgram) {
+            glGetProgramiv(shader, GL_INFO_LOG_LENGTH, &success);
+            infoLog.resize(success);
+            glGetProgramInfoLog(shader, infoLog.size(), nullptr, &infoLog[0]);
+        } else {
+            glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &success);
+            infoLog.resize(success);
+            glGetShaderInfoLog(shader, infoLog.size(), nullptr, &infoLog[0]);
+        }
 
-    std::ifstream vertexShaderFile(vertexShaderPath);
-    std::ifstream fragmentShaderFile(fragmentShaderPath);
+        std::cerr << errorMessage << ": " << infoLog << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+}
 
-    if (!vertexShaderFile.is_open() || !fragmentShaderFile.is_open()) {
-        std::cerr << "Failed to open shader files" << std::endl;
+GLuint compileShader(const std::filesystem::path &shaderPath, int shaderType) {
+    std::string shaderSource;
+    std::ifstream shaderFile(shaderPath);
+
+    if (!shaderFile.is_open()) {
+        std::cerr << "Failed to open shader file: " << shaderPath << std::endl;
         std::exit(EXIT_FAILURE);
     }
 
-    vertexShaderSource =
-        std::string(std::istreambuf_iterator<char>(vertexShaderFile),
-                    std::istreambuf_iterator<char>());
-    fragmentShaderSource =
-        std::string(std::istreambuf_iterator<char>(fragmentShaderFile),
-                    std::istreambuf_iterator<char>());
+    shaderSource = std::string(std::istreambuf_iterator<char>(shaderFile),
+                               std::istreambuf_iterator<char>());
 
-    const char *vs = vertexShaderSource.c_str();
-    const char *fs = fragmentShaderSource.c_str();
+    const char *shaderSourceC = shaderSource.c_str();
 
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    GLuint shader = glCreateShader(shaderType);
 
-    glShaderSource(vertexShader, 1, &vs, nullptr);
-    glCompileShader(vertexShader);
+    glShaderSource(shader, 1, &shaderSourceC, nullptr);
+    glCompileShader(shader);
 
-    int success;
-    std::string infoLog;
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &success);
-        infoLog.resize(success);
-        glGetShaderInfoLog(vertexShader, infoLog.size(), nullptr, &infoLog[0]);
-        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n"
-                  << infoLog << std::endl;
+    std::string shaderTypeStr;
+    switch (shaderType) {
+    case GL_VERTEX_SHADER:
+        shaderTypeStr = "VERTEX";
+        break;
+    case GL_TESS_CONTROL_SHADER:
+        shaderTypeStr = "TESS_CONTROL";
+        break;
+    case GL_TESS_EVALUATION_SHADER:
+        shaderTypeStr = "TESS_EVALUATION";
+        break;
+    case GL_GEOMETRY_SHADER:
+        shaderTypeStr = "GEOMETRY";
+        break;
+    case GL_FRAGMENT_SHADER:
+        shaderTypeStr = "FRAGMENT";
+        break;
+    default:
+        shaderTypeStr = "UNKNOWN";
+        break;
     }
+    checkShaderError(shader, GL_COMPILE_STATUS, false,
+                     "ERROR::SHADER::" + shaderTypeStr +
+                         "::COMPILATION_FAILED");
 
-    glShaderSource(fragmentShader, 1, &fs, nullptr);
-    glCompileShader(fragmentShader);
+    return shader;
+}
 
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &success);
-        infoLog.resize(success);
-        glGetShaderInfoLog(vertexShader, infoLog.size(), nullptr, &infoLog[0]);
-        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n"
-                  << infoLog << std::endl;
-    }
-
+void Drawable::compileShaders() const {
+    std::string shaderPath = getShaderPath();
     getShaderProgram() = glCreateProgram();
     GLuint shaderProgram = getShaderProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
+    int shaderTypes = getShaderTypes();
 
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &success);
-        infoLog.resize(success);
-        glGetShaderInfoLog(vertexShader, infoLog.size(), nullptr, &infoLog[0]);
-        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n"
-                  << infoLog << std::endl;
+    if (shaderTypes & ShaderType::VERTEX) {
+        GLuint vertexShader =
+            compileShader(shaderPath + ".vs", GL_VERTEX_SHADER);
+        glAttachShader(shaderProgram, vertexShader);
     }
 
+    if (shaderTypes & ShaderType::TESS_CONTROL) {
+        GLuint tessControlShader =
+            compileShader(shaderPath + ".tcs", GL_TESS_CONTROL_SHADER);
+        glAttachShader(shaderProgram, tessControlShader);
+    }
+
+    if (shaderTypes & ShaderType::TESS_EVALUATION) {
+        GLuint tessEvaluationShader =
+            compileShader(shaderPath + ".tes", GL_TESS_EVALUATION_SHADER);
+        glAttachShader(shaderProgram, tessEvaluationShader);
+    }
+
+    if (shaderTypes & ShaderType::GEOMETRY) {
+        GLuint geometryShader =
+            compileShader(shaderPath + ".gs", GL_GEOMETRY_SHADER);
+        glAttachShader(shaderProgram, geometryShader);
+    }
+
+    if (shaderTypes & ShaderType::FRAGMENT) {
+        GLuint fragmentShader =
+            compileShader(shaderPath + ".fs", GL_FRAGMENT_SHADER);
+        glAttachShader(shaderProgram, fragmentShader);
+    }
+
+    glLinkProgram(shaderProgram);
+
+    checkShaderError(shaderProgram, GL_LINK_STATUS, true,
+                     "ERROR::SHADER::PROGRAM::LINKING_FAILED");
+
     glUseProgram(shaderProgram);
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
 }
 
 void Drawable::recompileShaders() const {
@@ -111,7 +153,8 @@ void Drawable::setBuffers() {
 
     glGenBuffers(1, &getEbo());
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, getEbo());
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, getIndices().size() * sizeof(unsigned int),
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                 getIndices().size() * sizeof(unsigned int),
                  getIndices().data(), GL_STATIC_DRAW);
 
     glBindVertexArray(0);

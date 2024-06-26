@@ -118,6 +118,10 @@ GLuint &EarthGrid::getEbo() const { return ebo; }
 
 GLuint &EarthGrid::getShaderProgram() const { return shaderProgram; }
 
+int EarthGrid::getShaderTypes() const {
+    return ShaderType::VERTEX | ShaderType::FRAGMENT;
+}
+
 std::vector<unsigned> EarthGrid::indices;
 
 std::vector<unsigned> &EarthGrid::getIndices() { return indices; }

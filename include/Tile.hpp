@@ -44,6 +44,8 @@ private:
     GLuint &getEbo() const override;
     GLuint &getShaderProgram() const override;
 
+    int getShaderTypes() const override;
+
     static bool initialized;
 
     static std::mutex tileMutex;
