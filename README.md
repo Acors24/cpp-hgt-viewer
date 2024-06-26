@@ -2,7 +2,7 @@
 
 This program can be used to visualize height maps downloaded e.g. from [this site](https://www.viewfinderpanoramas.org/Coverage%20map%20viewfinderpanoramas_org3.htm).
 
-Tested with g++ (GCC) 14.1.1.
+Tested with clang++ 18.1.6.
 
 ## Building
 
@@ -26,18 +26,18 @@ You must specify at least one path, which could contain directly the `.hgt` file
 
 Coordinates are given in degrees.
 - `-lon` and `-lat` specify the range of the loaded tiles, out of the ones in the specified directory.
-- `-start` specifies the starting position of the camera in the 2D view.
+- `-start` specifies the starting position of the camera.
 
 Altitude is given in kilometers above sea level.\
 The order of the arguments does not matter.
 
-The program will look for `.hgt` files in the given directories, matching any given limits (`-lat`/`-lon`, if given), and load their data, assuming each of the files contains 1201 * 1201 encoded integers.
+The program will recursively look for `.hgt` files in the given directories, matching any given limits (`-lat`/`-lon`, if given), and load their data, assuming each of the files contains 1201 * 1201 encoded integers.
 
-Loading can take a while, depending on the amount of `.hgt` files being loaded.
+Tiles will be loaded asynchronously on a separate thread.
 
 After successful initialization:
 - the crosshair should be visible,
-- drawing rate, FPS and current "coordinates" should be printed in the terminal.
+- drawing rate, FPS and current 2D coordinates should be printed in the terminal.
 
 ### Controls
 
@@ -63,27 +63,16 @@ The level of detail (LOD) can be changed with the number keys:
 - ...
 - <kbd>7</kbd>
 - <kbd>8</kbd> - Worst
-- <kbd>0</kbd> - Auto (will try to keep FPS at 10+)
+- <kbd>0</kbd> - Auto (will adjust each tile's LOD based on distance)
 
-Press <kbd>Q</kbd> to recompile shaders for the crosshair and grid.
+Press <kbd>Q</kbd> to recompile shaders for the crosshair, grid and tiles.
 
 ## Screenshots
 
-<style>
-    #tiled {
-        display: flex;
-        flex-wrap: wrap;
-    }
-    #tiled > img {
-        width: 50%;
-    }
-</style>
-<div id="tiled">
-    <img src="./images/Screenshot_1.png" />
-    <img src="./images/Screenshot_2.png" />
-    <img src="./images/Screenshot_4.png" />
-    <img src="./images/Screenshot_5.png" />
-    <img src="./images/Screenshot_3.png" />
-    <img src="./images/Screenshot_6.png" />
-</div>
-<img src="./images/Screenshot_7.png" />
+![Screenshot_1](./images/Screenshot_1.png)
+![Screenshot_2](./images/Screenshot_2.png)
+![Screenshot_3](./images/Screenshot_3.png)
+![Screenshot_4](./images/Screenshot_4.png)
+![Screenshot_5](./images/Screenshot_5.png)
+![Screenshot_6](./images/Screenshot_6.png)
+![Screenshot_7](./images/Screenshot_7.png)
